@@ -49,6 +49,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/admin" element={<AuthAdmin />} />
             <Route path="/auth/admin/signup" element={<AuthAdminSignup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/dashboard/new-ticket" element={<ProtectedRoute><NewTicket /></ProtectedRoute>} />
