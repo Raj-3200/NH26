@@ -8,7 +8,28 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { MessageSquare, Bot, Send } from "lucide-react";
+import { MessageSquare, Bot, Send, Clock, ArrowUpCircle, User } from "lucide-react";
+
+const SLA_HOURS: Record<string, number> = {
+  critical: 4,
+  high: 8,
+  medium: 24,
+  low: 48,
+};
+
+function getEstimatedTime(ticket: any) {
+  const createdAt = new Date(ticket.created_at).getTime();
+  const slaHours = SLA_HOURS[ticket.priority] || 24;
+  const deadline = createdAt + slaHours * 60 * 60 * 1000;
+  const now = Date.now();
+  const remaining = deadline - now;
+  if (ticket.status === "resolved" || ticket.status === "closed") return { label: "Resolved", overdue: false };
+  if (remaining <= 0) return { label: "Overdue", overdue: true };
+  const hours = Math.floor(remaining / (60 * 60 * 1000));
+  const mins = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+  if (hours > 0) return { label: `~${hours}h ${mins}m left`, overdue: false };
+  return { label: `~${mins}m left`, overdue: false };
+}
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -18,6 +39,7 @@ export default function TicketDetail() {
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(true);
+  const [creatorName, setCreatorName] = useState("");
 
   const fetchData = async () => {
     if (!id) return;
@@ -27,6 +49,10 @@ export default function TicketDetail() {
     ]);
     setTicket(t);
     setComments(c || []);
+    if (t) {
+      const { data: prof } = await supabase.from("profiles").select("full_name, email").eq("user_id", t.created_by).single();
+      setCreatorName(prof?.full_name || prof?.email || "Unknown");
+    }
     setLoading(false);
   };
 
@@ -37,6 +63,19 @@ export default function TicketDetail() {
     if (status === "resolved") updates.resolved_at = new Date().toISOString();
     await supabase.from("tickets").update(updates).eq("id", id);
     toast({ title: "Status updated" });
+    fetchData();
+  };
+
+  const handleEscalate = async () => {
+    await supabase.from("tickets").update({ priority: "critical", status: "open" }).eq("id", id);
+    if (user) {
+      await supabase.from("ticket_comments").insert({
+        ticket_id: id,
+        user_id: user.id,
+        content: "⚠️ This ticket has been escalated to CRITICAL priority and sent to higher authority for immediate attention.",
+      });
+    }
+    toast({ title: "Ticket escalated", description: "Sent to higher authority for immediate attention." });
     fetchData();
   };
 
@@ -54,6 +93,8 @@ export default function TicketDetail() {
   if (loading) return <div className="text-center py-12 text-muted-foreground">Loading…</div>;
   if (!ticket) return <div className="text-center py-12 text-muted-foreground">Ticket not found</div>;
 
+  const eta = getEstimatedTime(ticket);
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <Card className="shadow-sm">
@@ -64,10 +105,33 @@ export default function TicketDetail() {
               <p className="text-sm text-muted-foreground mt-1">
                 #{ticket.ticket_number} · {ticket.department} · {new Date(ticket.created_at).toLocaleString()}
               </p>
+              <div className="flex items-center gap-4 mt-2 text-sm">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <User className="w-3.5 h-3.5" />
+                  Raised by: <span className="font-medium text-foreground">{creatorName}</span>
+                </span>
+                <span className={`flex items-center gap-1 font-medium ${eta.overdue ? "text-destructive" : "text-muted-foreground"}`}>
+                  <Clock className="w-3.5 h-3.5" />
+                  {eta.label}
+                </span>
+              </div>
             </div>
-            <div className="flex gap-2 shrink-0">
-              <Badge variant="secondary">{ticket.priority}</Badge>
-              <Badge variant="secondary">{ticket.status?.replace("_", " ")}</Badge>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className="flex gap-2">
+                <Badge variant="secondary">{ticket.priority}</Badge>
+                <Badge variant="secondary">{ticket.status?.replace("_", " ")}</Badge>
+              </div>
+              {isAdmin && ticket.priority !== "critical" && ticket.status !== "resolved" && ticket.status !== "closed" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={handleEscalate}
+                >
+                  <ArrowUpCircle className="w-3.5 h-3.5" />
+                  Send to Higher Authority
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
