@@ -14,6 +14,7 @@ import TicketDetail from "./pages/TicketDetail";
 import AllTickets from "./pages/AllTickets";
 import Analytics from "./pages/Analytics";
 import UsersAdmin from "./pages/UsersAdmin";
+import AuthAdmin from "./pages/AuthAdmin";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
