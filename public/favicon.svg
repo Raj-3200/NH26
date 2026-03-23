@@ -1,0 +1,22 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="#2563eb" opacity="0.1"/>
+  
+  <!-- Main desk/workspace icon -->
+  <g transform="translate(16, 20)">
+    <!-- Desktop/Monitor base -->
+    <rect x="2" y="0" width="28" height="18" rx="2" fill="none" stroke="#2563eb" stroke-width="2"/>
+    <!-- Monitor stand -->
+    <rect x="13" y="18" width="6" height="3" fill="#2563eb"/>
+    <!-- Ticket/Document stack indicator -->
+    <g transform="translate(6, 4)">
+      <line x1="0" y1="2" x2="16" y2="2" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="0" y1="6" x2="14" y2="6" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="0" y1="10" x2="12" y2="10" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+    </g>
+  </g>
+  
+  <!-- AI indicator - small sparkle -->
+  <circle cx="48" cy="18" r="3" fill="#2563eb"/>
+  <circle cx="48" cy="18" r="5" fill="none" stroke="#2563eb" stroke-width="0.5" opacity="0.5"/>
+</svg>

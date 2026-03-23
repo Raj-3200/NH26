@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Anyone can read admin whitelist" ON public.admin_whitelist;
+CREATE POLICY "Anyone can read admin whitelist" ON public.admin_whitelist FOR SELECT TO anon, authenticated USING (true);
