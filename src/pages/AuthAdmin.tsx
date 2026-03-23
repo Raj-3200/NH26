@@ -111,7 +111,7 @@ export default function AuthAdmin() {
                     <Input id="admin-pass" type="password" placeholder="••••••••" className="pl-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
                   </div>
                 </div>
-                <Button type="submit" className="w-full bg-destructive hover:bg-destructive/90 active:scale-[0.97] transition-transform" disabled={loading}>
+                <Button type="submit" className="w-full bg-zinc-900 hover:bg-zinc-800 text-white active:scale-[0.97] transition-transform" disabled={loading}>
                   {loading ? "Verifying…" : "Sign In as Admin"}
                 </Button>
               </form>
