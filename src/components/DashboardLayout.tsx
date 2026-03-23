@@ -126,6 +126,7 @@ export default function DashboardLayout({ children }: Props) {
                 window.location.reload();
               }}
             />
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">
