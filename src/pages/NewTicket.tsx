@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Send } from "lucide-react";
+import { Send, Mic, MicOff } from "lucide-react";
 
 const departments = ["IT", "Finance", "HR", "Operations", "Marketing", "General"] as const;
 const priorities = ["low", "medium", "high", "critical"] as const;
@@ -22,6 +22,46 @@ export default function NewTicket() {
   const [description, setDescription] = useState("");
   const [department, setDepartment] = useState<string>("General");
   const [priority, setPriority] = useState<string>("medium");
+
+  // Voice input state
+  const [listening, setListening] = useState(false);
+  const [voiceTarget, setVoiceTarget] = useState<"title" | "description">("description");
+  const recognitionRef = useRef<any>(null);
+
+  const startListening = useCallback((target: "title" | "description") => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ title: "Not supported", description: "Your browser doesn't support voice input.", variant: "destructive" });
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+    recognitionRef.current = recognition;
+    setVoiceTarget(target);
+
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((r: any) => r[0].transcript)
+        .join(" ");
+      if (target === "title") {
+        setTitle((prev) => (prev ? prev + " " : "") + transcript);
+      } else {
+        setDescription((prev) => (prev ? prev + " " : "") + transcript);
+      }
+    };
+    recognition.onerror = () => { setListening(false); };
+    recognition.onend = () => { setListening(false); };
+    recognition.start();
+    setListening(true);
+    toast({ title: "🎙️ Listening…", description: `Speak now to fill the ${target} field.` });
+  }, []);
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    setListening(false);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,12 +117,36 @@ export default function NewTicket() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="title">Title</Label>
+                <Button
+                  type="button"
+                  variant={listening && voiceTarget === "title" ? "destructive" : "outline"}
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  onClick={() => listening && voiceTarget === "title" ? stopListening() : startListening("title")}
+                >
+                  {listening && voiceTarget === "title" ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                  {listening && voiceTarget === "title" ? "Stop" : "Voice"}
+                </Button>
+              </div>
               <Input id="title" placeholder="Brief summary of the issue" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="desc">Description</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="desc">Description</Label>
+                <Button
+                  type="button"
+                  variant={listening && voiceTarget === "description" ? "destructive" : "outline"}
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  onClick={() => listening && voiceTarget === "description" ? stopListening() : startListening("description")}
+                >
+                  {listening && voiceTarget === "description" ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                  {listening && voiceTarget === "description" ? "Stop" : "Voice"}
+                </Button>
+              </div>
               <Textarea id="desc" placeholder="Provide details about the issue…" rows={5} value={description} onChange={(e) => setDescription(e.target.value)} required />
             </div>
 
