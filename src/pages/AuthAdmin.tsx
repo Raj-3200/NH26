@@ -75,7 +75,6 @@ export default function AuthAdmin() {
           </div>
         </div>
       </div>
-      </div>
 
       {/* Right panel */}
       <div className="flex-1 flex items-center justify-center p-6 bg-background">
