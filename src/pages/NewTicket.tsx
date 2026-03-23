@@ -117,12 +117,36 @@ export default function NewTicket() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="title">Title</Label>
+                <Button
+                  type="button"
+                  variant={listening && voiceTarget === "title" ? "destructive" : "outline"}
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  onClick={() => listening && voiceTarget === "title" ? stopListening() : startListening("title")}
+                >
+                  {listening && voiceTarget === "title" ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                  {listening && voiceTarget === "title" ? "Stop" : "Voice"}
+                </Button>
+              </div>
               <Input id="title" placeholder="Brief summary of the issue" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="desc">Description</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="desc">Description</Label>
+                <Button
+                  type="button"
+                  variant={listening && voiceTarget === "description" ? "destructive" : "outline"}
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  onClick={() => listening && voiceTarget === "description" ? stopListening() : startListening("description")}
+                >
+                  {listening && voiceTarget === "description" ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
+                  {listening && voiceTarget === "description" ? "Stop" : "Voice"}
+                </Button>
+              </div>
               <Textarea id="desc" placeholder="Provide details about the issue…" rows={5} value={description} onChange={(e) => setDescription(e.target.value)} required />
             </div>
 
