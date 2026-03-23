@@ -17,6 +17,23 @@ export default function AuthAdmin() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Check if email is in admin whitelist before attempting login
+    const { data: whitelist } = await supabase
+      .from("admin_whitelist")
+      .select("email")
+      .eq("email", email.toLowerCase().trim());
+
+    if (!whitelist || whitelist.length === 0) {
+      setLoading(false);
+      toast({
+        title: "Access denied",
+        description: "This email is not authorized for admin access.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setLoading(false);
@@ -36,7 +53,7 @@ export default function AuthAdmin() {
       setLoading(false);
       toast({
         title: "Access denied",
-        description: "This account does not have admin privileges. Please use the employee login.",
+        description: "This account does not have admin privileges.",
         variant: "destructive",
       });
       return;
