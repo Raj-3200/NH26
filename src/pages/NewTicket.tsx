@@ -28,21 +28,43 @@ export default function NewTicket() {
     if (!user) return;
     setLoading(true);
 
-    const { error } = await supabase.from("tickets").insert({
+    const { data: ticket, error } = await supabase.from("tickets").insert({
       title,
       description,
       department: department as any,
       priority: priority as any,
       created_by: user.id,
-    });
+    }).select().single();
+
+    if (error) {
+      setLoading(false);
+      toast({ title: "Failed to create ticket", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    // Run AI classification in background
+    try {
+      const { data: analysis } = await supabase.functions.invoke("classify-ticket", {
+        body: { title, description },
+      });
+      if (analysis && !analysis.error) {
+        await supabase.from("tickets").update({
+          category: analysis.category,
+          priority: analysis.priority,
+          department: analysis.department,
+          ai_sentiment: analysis.sentiment,
+          ai_classification: `${analysis.category} (AI)`,
+          ai_root_cause: analysis.root_cause,
+          ai_suggested_reply: analysis.suggested_reply,
+        }).eq("id", ticket.id);
+      }
+    } catch (aiErr) {
+      console.error("AI classification failed:", aiErr);
+    }
 
     setLoading(false);
-    if (error) {
-      toast({ title: "Failed to create ticket", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Ticket created", description: "Your ticket has been submitted successfully." });
-      navigate("/dashboard/tickets");
-    }
+    toast({ title: "Ticket created", description: "Your ticket has been submitted and AI-analyzed." });
+    navigate("/dashboard/tickets");
   };
 
   return (
