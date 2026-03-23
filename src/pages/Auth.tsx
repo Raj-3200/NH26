@@ -126,8 +126,8 @@ export default function Auth() {
             <TabsContent value="signin">
               <Card className="border-0 shadow-lg shadow-black/5">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-xl">Welcome back</CardTitle>
-                  <CardDescription>Sign in to your SmartDesk account</CardDescription>
+                  <CardTitle className="text-xl">Employee Sign In</CardTitle>
+                  <CardDescription>Sign in to your SmartDesk employee account</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSignIn} className="space-y-4">
