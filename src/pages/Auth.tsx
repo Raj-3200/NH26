@@ -87,6 +87,7 @@ export default function Auth() {
           <h1 className="text-4xl font-bold text-primary-foreground mb-4 leading-tight" style={{ lineHeight: "1.15" }}>
             SmartDesk
           </h1>
+          <p className="text-primary-foreground/60 text-sm font-medium tracking-wide uppercase mb-2">Employee Portal</p>
           <p className="text-primary-foreground/80 text-lg leading-relaxed">
             AI-powered complaint management that predicts, classifies, and resolves issues before they escalate.
           </p>
