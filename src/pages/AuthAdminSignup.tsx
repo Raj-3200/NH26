@@ -6,19 +6,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Shield, Mail, Lock } from "lucide-react";
+import { Shield, Mail, Lock, User } from "lucide-react";
 
-export default function AuthAdmin() {
+export default function AuthAdminSignup() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password.length < 6) {
+      toast({ title: "Password too short", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({ title: "Passwords don't match", description: "Please make sure both passwords match.", variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
 
-    // Check if email is in admin whitelist before attempting login
+    // Check whitelist
     const { data: whitelist } = await supabase
       .from("admin_whitelist")
       .select("email")
@@ -28,40 +41,33 @@ export default function AuthAdmin() {
       setLoading(false);
       toast({
         title: "Access denied",
-        description: "This email is not authorized for admin access.",
+        description: "This email is not authorized for admin registration.",
         variant: "destructive",
       });
       return;
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setLoading(false);
-      toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
-      return;
-    }
-
-    // Verify admin role
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", data.user.id)
-      .eq("role", "admin");
-
-    if (!roles || roles.length === 0) {
-      await supabase.auth.signOut();
-      setLoading(false);
-      toast({
-        title: "Access denied",
-        description: "This account does not have admin privileges.",
-        variant: "destructive",
-      });
-      return;
-    }
+    const { error } = await supabase.auth.signUp({
+      email: email.toLowerCase().trim(),
+      password,
+      options: {
+        data: { full_name: fullName.trim() },
+        emailRedirectTo: window.location.origin,
+      },
+    });
 
     setLoading(false);
-    toast({ title: "Welcome, Admin!" });
-    navigate("/dashboard");
+
+    if (error) {
+      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({
+      title: "Account created!",
+      description: "Please check your email to verify your account, then sign in.",
+    });
+    navigate("/auth/admin");
   };
 
   return (
@@ -77,19 +83,11 @@ export default function AuthAdmin() {
             <Shield className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
-            Admin Portal
+            Admin Registration
           </h1>
           <p className="text-zinc-400 text-lg leading-relaxed">
-            Manage tickets, users, analytics, and system-wide configurations from the admin dashboard.
+            Create your admin account. Only pre-authorized emails can register.
           </p>
-          <div className="mt-10 grid grid-cols-2 gap-4 text-left text-sm text-zinc-500">
-            {["Manage all tickets", "User role management", "Analytics dashboard", "AI insights & reports"].map((f) => (
-              <div key={f} className="flex items-center gap-2">
-                <Shield className="w-3 h-3 shrink-0" />
-                {f}
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -100,44 +98,55 @@ export default function AuthAdmin() {
             <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center">
               <Shield className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">Admin Portal</span>
+            <span className="text-xl font-bold text-foreground">Admin Registration</span>
           </div>
 
           <Card className="border-0 shadow-lg shadow-black/5">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl flex items-center gap-2">
                 <Shield className="w-5 h-5 text-zinc-900" />
-                Admin Sign In
+                Admin Sign Up
               </CardTitle>
-              <CardDescription>Access the admin dashboard with your admin credentials</CardDescription>
+              <CardDescription>Register with your authorized admin email</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSignIn} className="space-y-4">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="admin-name">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input id="admin-name" type="text" placeholder="John Doe" className="pl-10" value={fullName} onChange={(e) => setFullName(e.target.value)} required maxLength={100} />
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="admin-email">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input id="admin-email" type="email" placeholder="admin@company.com" className="pl-10" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <Input id="admin-email" type="email" placeholder="admin@company.com" className="pl-10" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="admin-pass">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input id="admin-pass" type="password" placeholder="••••••••" className="pl-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                    <Input id="admin-pass" type="password" placeholder="••••••••" className="pl-10" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="admin-confirm">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input id="admin-confirm" type="password" placeholder="••••••••" className="pl-10" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} />
                   </div>
                 </div>
                 <Button type="submit" className="w-full bg-zinc-900 hover:bg-zinc-800 text-white active:scale-[0.97] transition-transform" disabled={loading}>
-                  {loading ? "Verifying…" : "Sign In as Admin"}
+                  {loading ? "Creating account…" : "Create Admin Account"}
                 </Button>
               </form>
 
-              <div className="mt-6 space-y-2 text-center">
-                <Link to="/auth/admin/signup" className="block text-sm text-foreground font-medium hover:underline transition-colors">
-                  Don't have an account? Sign up
-                </Link>
-                <Link to="/auth" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  ← Employee login
+              <div className="mt-6 text-center">
+                <Link to="/auth/admin" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  ← Back to Admin Sign In
                 </Link>
               </div>
             </CardContent>

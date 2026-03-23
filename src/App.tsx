@@ -15,6 +15,7 @@ import AllTickets from "./pages/AllTickets";
 import Analytics from "./pages/Analytics";
 import UsersAdmin from "./pages/UsersAdmin";
 import AuthAdmin from "./pages/AuthAdmin";
+import AuthAdminSignup from "./pages/AuthAdminSignup";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/admin" element={<AuthAdmin />} />
+            <Route path="/auth/admin/signup" element={<AuthAdminSignup />} />
             <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/dashboard/new-ticket" element={<ProtectedRoute><NewTicket /></ProtectedRoute>} />
