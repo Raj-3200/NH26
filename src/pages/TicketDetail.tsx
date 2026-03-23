@@ -66,6 +66,19 @@ export default function TicketDetail() {
     fetchData();
   };
 
+  const handleEscalate = async () => {
+    await supabase.from("tickets").update({ priority: "critical", status: "open" }).eq("id", id);
+    if (user) {
+      await supabase.from("ticket_comments").insert({
+        ticket_id: id,
+        user_id: user.id,
+        content: "⚠️ This ticket has been escalated to CRITICAL priority and sent to higher authority for immediate attention.",
+      });
+    }
+    toast({ title: "Ticket escalated", description: "Sent to higher authority for immediate attention." });
+    fetchData();
+  };
+
   const handleAddComment = async () => {
     if (!newComment.trim() || !user) return;
     await supabase.from("ticket_comments").insert({
@@ -80,6 +93,8 @@ export default function TicketDetail() {
   if (loading) return <div className="text-center py-12 text-muted-foreground">Loading…</div>;
   if (!ticket) return <div className="text-center py-12 text-muted-foreground">Ticket not found</div>;
 
+  const eta = getEstimatedTime(ticket);
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <Card className="shadow-sm">
@@ -90,10 +105,33 @@ export default function TicketDetail() {
               <p className="text-sm text-muted-foreground mt-1">
                 #{ticket.ticket_number} · {ticket.department} · {new Date(ticket.created_at).toLocaleString()}
               </p>
+              <div className="flex items-center gap-4 mt-2 text-sm">
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <User className="w-3.5 h-3.5" />
+                  Raised by: <span className="font-medium text-foreground">{creatorName}</span>
+                </span>
+                <span className={`flex items-center gap-1 font-medium ${eta.overdue ? "text-destructive" : "text-muted-foreground"}`}>
+                  <Clock className="w-3.5 h-3.5" />
+                  {eta.label}
+                </span>
+              </div>
             </div>
-            <div className="flex gap-2 shrink-0">
-              <Badge variant="secondary">{ticket.priority}</Badge>
-              <Badge variant="secondary">{ticket.status?.replace("_", " ")}</Badge>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className="flex gap-2">
+                <Badge variant="secondary">{ticket.priority}</Badge>
+                <Badge variant="secondary">{ticket.status?.replace("_", " ")}</Badge>
+              </div>
+              {isAdmin && ticket.priority !== "critical" && ticket.status !== "resolved" && ticket.status !== "closed" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1 text-xs border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={handleEscalate}
+                >
+                  <ArrowUpCircle className="w-3.5 h-3.5" />
+                  Send to Higher Authority
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
