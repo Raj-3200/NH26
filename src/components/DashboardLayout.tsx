@@ -9,6 +9,10 @@ import {
 import {
   Headset, LayoutDashboard, Plus, List, BarChart3, Users, Settings, LogOut, Menu, X, Info, Shield,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface Props { children: ReactNode }
